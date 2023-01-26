@@ -5,14 +5,13 @@ import java.util.stream.Collectors;
 
 public class SeatCalculator {
 
-    private final Collection<String> parties;
-
+    private final Set<String> parties;
 
     /**
      * @param parties Parteien, welche für die Wahl registriert sind, darf nicht leer sein
      */
     public SeatCalculator(Set<String> parties) {
-        if (parties == null || parties.size() == 0) throw new IllegalArgumentException("parties field is empty");
+        if (parties.isEmpty()) throw new IllegalArgumentException("parties field is empty");
         this.parties = parties;
     }
 
@@ -28,21 +27,20 @@ public class SeatCalculator {
 
         List<Party> partyList = new ArrayList<>();
 
-        for (Map.Entry<String, Long> stringLongEntry : votesPerParty.entrySet()) {
-            if (parties.contains(stringLongEntry.getKey()))
-                partyList.add(new Party(stringLongEntry.getKey(), stringLongEntry.getValue()));
+        for (String party : parties) {
+            partyList.add(new Party(party, votesPerParty.get(party)));
         }
 
         if(partyList.size() == 0) throw new IllegalArgumentException();
 
         for (int i = 0; i < seats; i++) {
             Party wonParty = null;
-            double votes = 0;
+            double votesPerMandate = 0;
 
             for (Party party : partyList) {
-                if (votes < party.calculateVotesPerMandate()) {
+                if (votesPerMandate < party.calculateVotesPerMandate()) {
                     wonParty = party;
-                    votes = party.calculateVotesPerMandate();
+                    votesPerMandate = party.calculateVotesPerMandate();
                 }
             }
 

@@ -11,8 +11,6 @@ public class Party {
     private int mandate;
     private final long stimmen;
 
-    private double stimmenPerMandate;
-
     public Party(String partyName, long stimmen) {
         this.partyName = partyName;
         this.stimmen = stimmen;
