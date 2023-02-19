@@ -5,10 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -46,23 +43,27 @@ public class HotelTest {
     }
 
     @Test
-    public void createsHotel() {
-        byte[] data = null;
-        Map<String, Short> columns = null;
+    public void createsHotel() throws IOException {
+        byte[] data = Hotel.readData("src/main/resources/hotel/hotels.db");
+        Map<String, Short> columns = Hotel.readColumns("src/main/resources/hotel/hotels.db");
 
-        Hotel hotel = new Hotel(data, columns);
+        Hotel hotel = new Hotel(Arrays.copyOfRange(data, 2, Hotel.getHotelBytes(columns)+2), columns);
 
-        throw new UnsupportedOperationException("""
-                TODO 
-                Testlogik, welche sicherstellt, dass der angeführte Konstruktor 
-                mit den übergebenen Argumenten funktioniert und das richtige Hotel erzeugt
-                Dazu müssen die null Zuweisungen natürlich entsprechend modifiziert werden.
-                """);
+        assertEquals(firstHotel, hotel);
     }
+
+    public static Hotel firstHotel = new Hotel(
+            "Excelsior",
+            "Smallville",
+            2,
+            false,
+            21000,
+            LocalDate.of(2005, 3, 23),
+            "");
 
     @Test
     public void cannotReadFromInvalidFile() {
-        String filename = "src/main/resources/hotels/invalid.db";
+        String filename = "src/main/resources/hotel/invalid.db";
 
         String errorMsg = assertThrows(IllegalArgumentException.class, () -> Hotel.readHotels(filename)).getMessage();
         assertTrue(errorMsg.contains(filename));
