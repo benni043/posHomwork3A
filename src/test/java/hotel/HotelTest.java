@@ -45,21 +45,21 @@ public class HotelTest {
     @Test
     public void createsHotel() throws IOException {
         byte[] data = Hotel.readData("src/main/resources/hotel/hotels.db");
-        Map<String, Short> columns = Hotel.readColumns("src/main/resources/hotel/hotels.db");
+        Map<String, Short> columns = getColumnsMap();
+
+        Hotel firstHotel = new Hotel(
+                "Excelsior",
+                "Smallville",
+                2,
+                false,
+                21000,
+                LocalDate.of(2005, 3, 23),
+                "");
 
         Hotel hotel = new Hotel(Arrays.copyOfRange(data, 2, Hotel.getHotelBytes(columns)+2), columns);
 
         assertEquals(firstHotel, hotel);
     }
-
-    public static Hotel firstHotel = new Hotel(
-            "Excelsior",
-            "Smallville",
-            2,
-            false,
-            21000,
-            LocalDate.of(2005, 3, 23),
-            "");
 
     @Test
     public void cannotReadFromInvalidFile() {

@@ -20,31 +20,30 @@ public class Hotel implements Comparable<Hotel> {
         int lastIndex = 0;
 
         for (Map.Entry<String, Short> stringShortEntry : columns.entrySet()) {
+            String stringAttr = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim();
+
             switch (stringShortEntry.getKey()) {
                 case "name" -> {
-                    this.name = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim();
+                    this.name = stringAttr;
                 }
                 case "location" -> {
-                    this.location = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim();
+                    this.location = stringAttr;
                 }
                 case "size" -> {
-                    this.size = Integer.parseInt(new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim());
+                    this.size = Integer.parseInt(stringAttr);
                 }
                 case "smoking" -> {
-                    this.smoking = !new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim().equals("N");
+                    this.smoking = !stringAttr.equals("N");
                 }
                 case "rate" -> {
-                    String rateStr = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim();
-                    rateStr = rateStr.replace("$", "").replace(".", "");
-
-                    this.rate = Integer.parseInt(rateStr);
+                    this.rate = Integer.parseInt(stringAttr.replace("$", "").replace(".", ""));
                 }
                 case "date" -> {
                     String dateString = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue()));
                     this.date = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
                 }
                 case "owner" -> {
-                    this.owner = new String(Arrays.copyOfRange(data, lastIndex, lastIndex + stringShortEntry.getValue())).trim();
+                    this.owner = stringAttr;
                 }
             }
             lastIndex += stringShortEntry.getValue();
@@ -61,7 +60,7 @@ public class Hotel implements Comparable<Hotel> {
     }
 
     public static int getStartingOffset(String s) throws IOException {
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "rw")) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             randomAccessFile.seek(4);
             return randomAccessFile.readInt();
         }
@@ -70,7 +69,7 @@ public class Hotel implements Comparable<Hotel> {
     public static Map<String, Short> readColumns(String s) throws IOException {
         Map<String, Short> map = new LinkedHashMap<>();
 
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "rw")) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             randomAccessFile.seek(8);
 
             int anzCols = randomAccessFile.readShort();
@@ -94,7 +93,7 @@ public class Hotel implements Comparable<Hotel> {
     public static Set<Hotel> readHotels(String s) throws IOException {
         Set<Hotel> set = new TreeSet<>();
 
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "rw")) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             int startOff = getStartingOffset(s);
             int hotelBytes = getHotelBytes(readColumns(s));
 
@@ -120,7 +119,7 @@ public class Hotel implements Comparable<Hotel> {
     }
 
     public static byte[] readData(String fileName) throws IOException {
-        try (RandomAccessFile randomAccessFile = new RandomAccessFile(fileName, "rw")) {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(fileName, "r")) {
             randomAccessFile.seek(getStartingOffset(fileName));
 
             byte[] arr = new byte[(int) (randomAccessFile.length() - randomAccessFile.getFilePointer())];
