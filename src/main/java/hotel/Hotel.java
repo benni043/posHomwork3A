@@ -1,7 +1,7 @@
 package hotel;
 
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -129,6 +129,27 @@ public class Hotel implements Comparable<Hotel> {
         }
     }
 
+    public byte[] hotelToByteArray(String fileName) throws IOException {
+        Map<String, Short> map = readColumns(fileName);
+
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+
+        for (Map.Entry<String, Short> stringShortEntry : map.entrySet()) {
+            switch (stringShortEntry.getKey()) {
+                case "name" -> dataOutputStream.write(Arrays.copyOf(name.getBytes(), stringShortEntry.getValue()));
+                case "location" -> dataOutputStream.write(Arrays.copyOf(location.getBytes(), stringShortEntry.getValue()));
+                case "size" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(size).getBytes(), stringShortEntry.getValue()));
+                case "smoking" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(smoking).getBytes(), stringShortEntry.getValue()));
+                case "rate" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(rate).getBytes(), stringShortEntry.getValue()));
+                case "date" -> dataOutputStream.write(Arrays.copyOf(DateTimeFormatter.ofPattern("yyyy/MM/dd").format(date).getBytes(), stringShortEntry.getValue()));
+                case "owner" -> dataOutputStream.write(Arrays.copyOf(owner.getBytes(), stringShortEntry.getValue()));
+            }
+        }
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
     public static int getHotelBytes(Map<String, Short> map) {
         int val = 0;
         for (Short value : map.values()) {
@@ -146,6 +167,26 @@ public class Hotel implements Comparable<Hotel> {
         return location;
     }
 
+    public int getSize() {
+        return size;
+    }
+
+    public boolean isSmoking() {
+        return smoking;
+    }
+
+    public int getRate() {
+        return rate;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
+
     @Override
     public String toString() {
         return "Hotel{" +
@@ -161,7 +202,10 @@ public class Hotel implements Comparable<Hotel> {
 
     @Override
     public int compareTo(Hotel o) {
-        return Comparator.comparing(Hotel::getLocation).thenComparing(Hotel::getName).compare(this, o);
+        return Comparator
+                .comparing(Hotel::getLocation)
+                .thenComparing(Hotel::getName)
+                .compare(this, o);
     }
 
     @Override
