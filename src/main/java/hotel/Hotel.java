@@ -1,10 +1,10 @@
 package hotel;
 
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Hotel implements Comparable<Hotel> {
 
@@ -16,7 +16,13 @@ public class Hotel implements Comparable<Hotel> {
     private LocalDate date;
     private String owner;
 
+    private boolean isValid;
+
     public Hotel(byte[] data, Map<String, Short> columns) {
+        this(data, columns, true);
+    }
+
+    public Hotel(byte[] data, Map<String, Short> columns, boolean isValid) {
         int lastIndex = 0;
 
         for (Map.Entry<String, Short> stringShortEntry : columns.entrySet()) {
@@ -48,8 +54,15 @@ public class Hotel implements Comparable<Hotel> {
             }
             lastIndex += stringShortEntry.getValue();
         }
+
+        this.isValid = isValid;
     }
+
     public Hotel(String name, String location, int size, boolean smoking, int rate, LocalDate date, String owner) {
+        this(name, location, size, smoking, rate, date, owner, true);
+    }
+
+    public Hotel(String name, String location, int size, boolean smoking, int rate, LocalDate date, String owner, boolean isValid) {
         this.name = name;
         this.location = location;
         this.size = size;
@@ -57,11 +70,18 @@ public class Hotel implements Comparable<Hotel> {
         this.rate = rate;
         this.date = date;
         this.owner = owner;
+        this.isValid = isValid;
     }
 
     public static int getStartingOffset(String s) throws IOException {
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             randomAccessFile.seek(4);
+            return randomAccessFile.readInt();
+        }
+    }
+
+    public static int getId(String s) throws IOException {
+        try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             return randomAccessFile.readInt();
         }
     }
@@ -91,7 +111,12 @@ public class Hotel implements Comparable<Hotel> {
     }
 
     public static Set<Hotel> readHotels(String s) throws IOException {
-        Set<Hotel> set = new TreeSet<>();
+        Set<Hotel> hotels = readAllHotels(s);
+
+        return hotels.stream().filter(h -> h.isValid).collect(Collectors.toCollection(TreeSet::new));
+    }
+    public static Set<Hotel> readAllHotels(String s) throws IOException {
+        Set<Hotel> set = new LinkedHashSet<>();
 
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(s, "r")) {
             int startOff = getStartingOffset(s);
@@ -102,16 +127,17 @@ public class Hotel implements Comparable<Hotel> {
             while (randomAccessFile.getFilePointer() < randomAccessFile.length()) {
                 int checkByte = randomAccessFile.readShort();
 
-                if (checkByte == 0) {
-                    byte[] ar = new byte[hotelBytes];
-                    randomAccessFile.read(ar);
+                byte[] ar = new byte[hotelBytes];
+                randomAccessFile.read(ar);
 
-                    set.add(new Hotel(ar, readColumns(s)));
+                if (checkByte == 0) {
+                    set.add(new Hotel(ar, readColumns(s), true));
                 } else if (checkByte == -32768) {
-                    randomAccessFile.seek(randomAccessFile.getFilePointer() + hotelBytes);
+                    set.add(new Hotel(ar, readColumns(s), false));
                 } else {
                     throw new IllegalArgumentException(s);
                 }
+
             }
         }
 
@@ -135,14 +161,27 @@ public class Hotel implements Comparable<Hotel> {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
+        if (isValid) dataOutputStream.writeShort(0);
+        else dataOutputStream.writeShort(-32768);
+
         for (Map.Entry<String, Short> stringShortEntry : map.entrySet()) {
             switch (stringShortEntry.getKey()) {
                 case "name" -> dataOutputStream.write(Arrays.copyOf(name.getBytes(), stringShortEntry.getValue()));
-                case "location" -> dataOutputStream.write(Arrays.copyOf(location.getBytes(), stringShortEntry.getValue()));
-                case "size" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(size).getBytes(), stringShortEntry.getValue()));
-                case "smoking" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(smoking).getBytes(), stringShortEntry.getValue()));
-                case "rate" -> dataOutputStream.write(Arrays.copyOf(String.valueOf(rate).getBytes(), stringShortEntry.getValue()));
-                case "date" -> dataOutputStream.write(Arrays.copyOf(DateTimeFormatter.ofPattern("yyyy/MM/dd").format(date).getBytes(), stringShortEntry.getValue()));
+                case "location" ->
+                        dataOutputStream.write(Arrays.copyOf(location.getBytes(), stringShortEntry.getValue()));
+                case "size" ->
+                        dataOutputStream.write(Arrays.copyOf(String.valueOf(size).getBytes(), stringShortEntry.getValue()));
+                case "smoking" -> {
+                    dataOutputStream.write(Arrays.copyOf((smoking ? "Y" : "N").getBytes(), stringShortEntry.getValue()));
+                }
+                case "rate" -> {
+                    StringBuilder sb = new StringBuilder(String.valueOf(rate));
+                    sb.insert(0, "$");
+                    sb.insert(sb.length() - 2, ".");
+                    dataOutputStream.write(Arrays.copyOf(sb.toString().getBytes(), stringShortEntry.getValue()));
+                }
+                case "date" ->
+                        dataOutputStream.write(Arrays.copyOf(DateTimeFormatter.ofPattern("yyyy/MM/dd").format(date).getBytes(), stringShortEntry.getValue()));
                 case "owner" -> dataOutputStream.write(Arrays.copyOf(owner.getBytes(), stringShortEntry.getValue()));
             }
         }
@@ -185,6 +224,14 @@ public class Hotel implements Comparable<Hotel> {
 
     public String getOwner() {
         return owner;
+    }
+
+    public boolean isValid() {
+        return isValid;
+    }
+
+    public void setValid(boolean valid) {
+        isValid = valid;
     }
 
     @Override
