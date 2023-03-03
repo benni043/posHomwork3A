@@ -32,10 +32,10 @@ public class DeleteLines {
         try (AsciiInputStream asciiInputStream = new AsciiInputStream(inputFileName);
              FileOutputStream fileOutputStream = new FileOutputStream(outputFileName)) {
 
-           String line;
-           int lineCount = 0;
+            String line;
+            int lineCount = 0;
             while ((line = asciiInputStream.readLine2()) != null) {
-                if(!numbers.contains(lineCount)) {
+                if (!numbers.contains(lineCount)) {
                     fileOutputStream.write(line.getBytes());
                 }
                 lineCount++;
@@ -48,6 +48,9 @@ public class DeleteLines {
         String outputFileName = args[1];
         String[] linesToDelete = new String[args.length - 2];
         System.arraycopy(args, 2, linesToDelete, 0, args.length - 2);
+
+//        String[] linesToDelete = Arrays.copyOfRange(args, 2, args.length - 1);
+//        System.out.println(Arrays.toString(linesToDelete));
 
         Set<Integer> numberOfLinesToDelete = parse(linesToDelete);
 
