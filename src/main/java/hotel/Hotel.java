@@ -115,6 +115,7 @@ public class Hotel implements Comparable<Hotel> {
 
         return hotels.stream().filter(h -> h.isValid).collect(Collectors.toCollection(TreeSet::new));
     }
+
     public static Set<Hotel> readAllHotels(String s) throws IOException {
         Set<Hotel> set = new LinkedHashSet<>();
 
@@ -158,35 +159,38 @@ public class Hotel implements Comparable<Hotel> {
     public byte[] hotelToByteArray(String fileName) throws IOException {
         Map<String, Short> map = readColumns(fileName);
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+        try (
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
+        ) {
+            if (isValid) dataOutputStream.writeShort(0);
+            else dataOutputStream.writeShort(-32768);
 
-        if (isValid) dataOutputStream.writeShort(0);
-        else dataOutputStream.writeShort(-32768);
-
-        for (Map.Entry<String, Short> stringShortEntry : map.entrySet()) {
-            switch (stringShortEntry.getKey()) {
-                case "name" -> dataOutputStream.write(Arrays.copyOf(name.getBytes(), stringShortEntry.getValue()));
-                case "location" ->
-                        dataOutputStream.write(Arrays.copyOf(location.getBytes(), stringShortEntry.getValue()));
-                case "size" ->
-                        dataOutputStream.write(Arrays.copyOf(String.valueOf(size).getBytes(), stringShortEntry.getValue()));
-                case "smoking" -> {
-                    dataOutputStream.write(Arrays.copyOf((smoking ? "Y" : "N").getBytes(), stringShortEntry.getValue()));
+            for (Map.Entry<String, Short> stringShortEntry : map.entrySet()) {
+                switch (stringShortEntry.getKey()) {
+                    case "name" -> dataOutputStream.write(Arrays.copyOf(name.getBytes(), stringShortEntry.getValue()));
+                    case "location" ->
+                            dataOutputStream.write(Arrays.copyOf(location.getBytes(), stringShortEntry.getValue()));
+                    case "size" ->
+                            dataOutputStream.write(Arrays.copyOf(String.valueOf(size).getBytes(), stringShortEntry.getValue()));
+                    case "smoking" -> {
+                        dataOutputStream.write(Arrays.copyOf((smoking ? "Y" : "N").getBytes(), stringShortEntry.getValue()));
+                    }
+                    case "rate" -> {
+                        StringBuilder sb = new StringBuilder(String.valueOf(rate));
+                        sb.insert(0, "$");
+                        sb.insert(sb.length() - 2, ".");
+                        dataOutputStream.write(Arrays.copyOf(sb.toString().getBytes(), stringShortEntry.getValue()));
+                    }
+                    case "date" ->
+                            dataOutputStream.write(Arrays.copyOf(DateTimeFormatter.ofPattern("yyyy/MM/dd").format(date).getBytes(), stringShortEntry.getValue()));
+                    case "owner" ->
+                            dataOutputStream.write(Arrays.copyOf(owner.getBytes(), stringShortEntry.getValue()));
                 }
-                case "rate" -> {
-                    StringBuilder sb = new StringBuilder(String.valueOf(rate));
-                    sb.insert(0, "$");
-                    sb.insert(sb.length() - 2, ".");
-                    dataOutputStream.write(Arrays.copyOf(sb.toString().getBytes(), stringShortEntry.getValue()));
-                }
-                case "date" ->
-                        dataOutputStream.write(Arrays.copyOf(DateTimeFormatter.ofPattern("yyyy/MM/dd").format(date).getBytes(), stringShortEntry.getValue()));
-                case "owner" -> dataOutputStream.write(Arrays.copyOf(owner.getBytes(), stringShortEntry.getValue()));
             }
-        }
 
-        return byteArrayOutputStream.toByteArray();
+            return byteArrayOutputStream.toByteArray();
+        }
     }
 
     public static int getHotelBytes(Map<String, Short> map) {

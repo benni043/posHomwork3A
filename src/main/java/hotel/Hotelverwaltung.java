@@ -40,7 +40,6 @@ public class Hotelverwaltung {
 
     public void writeHeader() throws IOException {
         try (RandomAccessFile randomAccessFile = new RandomAccessFile(path, "rw")) {
-
             randomAccessFile.writeInt(versionsNummer);
             randomAccessFile.writeInt(74);
             randomAccessFile.writeShort(getColumnsMap().size());
