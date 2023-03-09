@@ -1,0 +1,22 @@
++--+----------------------------------+
+|   4 | File id                       |
+|   4 | offset                        |
+|1337 | Unimportant Metadata          |
+|   2 | playerCount                   |
++-------------------------------------+
+|@offset                              |
++-------------------------------------+
+|while !EOF                           |
+|for i in playerCount                 |
+|    +---+--------------------------+ |
+|    | 2 | length of player Data----+ |
+|    +---+--------------------------+ |
+|    |   | Aliased (UTF)            | |
+|    | 4 | year Last Match          | |
+|    | 4 | month Last Match         | |
+|    | 4 | day Last Match           | |
+|    | 4 | Score per Minute         | |
+|    | 4 | Wins                     | |
+|    | 4 | Looses                   | |
+|    +--+---------------------------+ |
++-------------------------------------+
