@@ -8,8 +8,8 @@ import java.util.List;
 
 public class PathOfSurvival {
 
-    private List<Player> players;
-    private List<Player> playersUnsorted;
+    private final List<Player> players;
+    private final List<Player> playersUnsorted;
     public static final int offsetLength = 1347;
     public static final String path = "src/main/resources/pos/playerdata_new.bin";
 
@@ -31,8 +31,9 @@ public class PathOfSurvival {
                 int wins = randomAccessFile.readInt();
                 int looses = randomAccessFile.readInt();
 
-                players.add(new Player(alias, yearLastMatch, monthLastMatch, dayLastMatch, scorePerMinute, wins, looses));
-                playersUnsorted.add(new Player(alias, yearLastMatch, monthLastMatch, dayLastMatch, scorePerMinute, wins, looses));
+                Player player = new Player(alias, yearLastMatch, monthLastMatch, dayLastMatch, scorePerMinute, wins, looses);
+                players.add(player);
+                playersUnsorted.add(player);
             }
         }
 
@@ -45,11 +46,9 @@ public class PathOfSurvival {
 
             for (int i = 0; i < playersUnsorted.size(); i++) {
                 if (playersUnsorted.get(i).alias().equals(alias)) {
-                    randomAccessFile.readShort();
+                    randomAccessFile.skipBytes(2);
                     randomAccessFile.readUTF();
-                    randomAccessFile.readInt();
-                    randomAccessFile.readInt();
-                    randomAccessFile.readInt();
+                    randomAccessFile.skipBytes(12);
 
                     randomAccessFile.writeInt(newScorePerMinute);
                     randomAccessFile.writeInt(newWins);
@@ -63,13 +62,10 @@ public class PathOfSurvival {
                     int dayLastMatch = player.dayLastMatch();
 
                     playersUnsorted.remove(i);
-
                     playersUnsorted.add(i, new Player(aliasOld, yearLastMatch, monthLastMatch, dayLastMatch, newScorePerMinute, newWins, newLosses));
                     break;
-                } else {
-                    short x = randomAccessFile.readShort();
-                    randomAccessFile.seek(randomAccessFile.getFilePointer() + x);
                 }
+                randomAccessFile.skipBytes(randomAccessFile.readShort());
             }
         }
     }
@@ -77,7 +73,7 @@ public class PathOfSurvival {
     public static void main(String[] args) throws IOException {
         PathOfSurvival pos = new PathOfSurvival();
 
-        //orig Datei
+        //orig file
         for (Player player : pos.playersUnsorted) {
             switch (player.alias()) {
                 case "HunterKiller11111elf", "CyberBob", "ShadowDeath42" -> System.out.println(player);
@@ -90,7 +86,7 @@ public class PathOfSurvival {
         pos.findPlayer("CyberBob", 2, 1, 354);
         pos.findPlayer("ShadowDeath42", 3, 0, 400);
 
-        //changed datei with new values
+        //changed file with new values
         for (Player player : pos.playersUnsorted) {
             switch (player.alias()) {
                 case "HunterKiller11111elf", "CyberBob", "ShadowDeath42" -> System.out.println(player);
@@ -101,7 +97,7 @@ public class PathOfSurvival {
 
         PathOfSurvival pos2 = new PathOfSurvival();
 
-        //open the file again with new class and check if data write was correct
+        //open the file again with new class and check if data was written correctly
         for (Player player : pos2.playersUnsorted) {
             switch (player.alias()) {
                 case "HunterKiller11111elf", "CyberBob", "ShadowDeath42" -> System.out.println(player);
